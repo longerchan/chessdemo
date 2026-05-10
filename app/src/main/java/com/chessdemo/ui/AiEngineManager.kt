@@ -36,13 +36,6 @@ class AiEngineManager(
         aiJob?.cancel()
         aiJob = scope.launch {
             updateUi { state -> state.copy(aiThinking = true) }
-            delay(300)
-            if (!isActive) {
-                updateUi { state -> state.copy(aiThinking = false) }
-                return@launch
-            }
-
-            // Re-check state after delay to avoid stale-state search
             val stateToSearch = getGameTree().currentState()
             if (stateToSearch.gameOver || !isActive) {
                 updateUi { state -> state.copy(aiThinking = false) }
@@ -110,7 +103,6 @@ class AiEngineManager(
                 val state = getGameTree().currentState()
                 if (state.gameOver) break
                 updateUi { state -> state.copy(aiThinking = true) }
-                delay(300)
                 if (!isActive) break
 
                 val stateToSearch = getGameTree().currentState()
@@ -130,7 +122,6 @@ class AiEngineManager(
                     vibrateMove()
                 }
                 updateUi { state -> state.copy(aiThinking = false) }
-                delay(500)
             }
         }
     }
