@@ -18,7 +18,7 @@ object StockfishEngine {
     }
 
     @JvmStatic
-    private external fun nativeInit(ttSizeMB: Int): Long
+    private external fun nativeInit(ttSizeMB: Int, threadCount: Int): Long
 
     @JvmStatic
     private external fun nativeSetOption(name: String, value: String)
@@ -57,8 +57,7 @@ object StockfishEngine {
     fun initialize() {
         if (!initialized) {
             if (!nativeLoaded) throw IllegalStateException("Native library not loaded")
-            nativeInit(TT_SIZE_MB)
-            nativeSetOption("Threads", THREADS.toString())
+            nativeInit(TT_SIZE_MB, THREADS)
             initialized = true
         }
     }

@@ -32,7 +32,7 @@ static std::mutex g_info_mutex;
 extern "C" {
 
 JNIEXPORT jlong JNICALL
-Java_com_chessdemo_ai_StockfishEngine_nativeInit(JNIEnv* env, jobject thiz, jint ttSizeMB) {
+Java_com_chessdemo_ai_StockfishEngine_nativeInit(JNIEnv* env, jobject thiz, jint ttSizeMB, jint threadCount) {
     std::lock_guard<std::mutex> lock(g_engine_mutex);
 
     __android_log_print(ANDROID_LOG_INFO, "Stockfish", "Calling Bitboards::init()...");
@@ -41,6 +41,15 @@ Java_com_chessdemo_ai_StockfishEngine_nativeInit(JNIEnv* env, jobject thiz, jint
 
     Engine* eng = new Engine();
     eng->set_tt_size(static_cast<size_t>(ttSizeMB));
+
+    // Set thread count BEFORE search_clear to avoid race with thread initialization
+    {
+        std::string cmd = "name Threads value " + std::to_string(threadCount);
+        std::istringstream ss(cmd);
+        eng->get_options().setoption(ss);
+        __android_log_print(ANDROID_LOG_INFO, "Stockfish", "Threads set to %d", threadCount);
+    }
+
     eng->search_clear();
 
     eng->set_on_bestmove([](std::string_view bestmove, std::string_view /*ponder*/) {
