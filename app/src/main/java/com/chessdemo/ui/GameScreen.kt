@@ -49,13 +49,6 @@ fun GameScreen(viewModel: GameViewModel) {
         viewModel.startAnalysis()
     }
 
-    // AI vs AI mode: trigger first AI move when mode is set
-    LaunchedEffect(gameMode) {
-        if (gameMode == GameMode.COMPUTER_VS_COMPUTER && !currentState.gameOver) {
-            // The ViewModel handles this via executeMove -> checkAndTriggerAi
-        }
-    }
-
     Column(
         modifier = Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
