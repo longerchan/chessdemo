@@ -10,14 +10,15 @@ import java.security.MessageDigest
 /**
  * Polyglot-style opening book using a binary file format.
  *
- * Format: sorted array of entries, each 16 bytes:
- *   8 bytes: position hash (big-endian long) — SHA-256 of FEN prefix
+ * File format per entry (10 bytes):
+ *   4 bytes: position hash (big-endian int, unsigned) — SHA-256 of FEN board part prefix
  *   4 bytes: move UCI string offset (index into string pool)
  *   2 bytes: weight (1–65535)
- *   2 bytes: padding
  *
  * Followed by a null-terminated string pool of UCI move strings.
  * Header: 8 bytes magic ("PGBOOK00"), 4 bytes entry count, 4 bytes string pool size.
+ *
+ * In-memory: entries are packed into a LongArray as (hash << 32) | (offset << 16) | weight.
  */
 object PolyglotBook {
 
@@ -63,7 +64,7 @@ object PolyglotBook {
     /** Look up book moves for a given FEN position. */
     fun lookupByFen(fen: String): List<BookMove> {
         if (!loaded) return emptyList()
-        val hash = computeHash(fen)
+        val hash = (computeHash(fen) ushr 32) and 0xFFFFFFFFL
         val ents = entries ?: return emptyList()
         val strings = moveStrings ?: return emptyList()
 
@@ -73,7 +74,7 @@ object PolyglotBook {
         var hi = count - 1
         while (lo <= hi) {
             val mid = (lo + hi) ushr 1
-            val entryHash = (ents[mid] ushr 32).toInt().toLong()
+            val entryHash = (ents[mid] ushr 32) and 0xFFFFFFFFL
             when {
                 entryHash < hash -> lo = mid + 1
                 entryHash > hash -> hi = mid - 1
@@ -81,12 +82,12 @@ object PolyglotBook {
                     // Found — collect all entries with this hash
                     val results = mutableListOf<BookMove>()
                     var i = mid
-                    while (i >= 0 && (ents[i] ushr 32).toInt().toLong() == hash) {
+                    while (i >= 0 && ((ents[i] ushr 32) and 0xFFFFFFFFL) == hash) {
                         results.add(decodeEntry(ents[i], strings))
                         i--
                     }
                     i = mid + 1
-                    while (i < count && (ents[i] ushr 32).toInt().toLong() == hash) {
+                    while (i < count && ((ents[i] ushr 32) and 0xFFFFFFFFL) == hash) {
                         results.add(decodeEntry(ents[i], strings))
                         i++
                     }
@@ -127,7 +128,7 @@ object PolyglotBook {
         val boardPart = fen.substringBefore(' ', fen)
         val digest = MessageDigest.getInstance("SHA-256")
         val bytes = digest.digest(boardPart.toByteArray(Charsets.UTF_8))
-        // Take first 8 bytes as a long (big-endian)
+        // Take first 8 bytes as a long (big-endian). Upper 32 bits match the stored buf.int hash.
         var hash = 0L
         for (i in 0 until 8) {
             hash = (hash shl 8) or (bytes[i].toLong() and 0xFFL)
