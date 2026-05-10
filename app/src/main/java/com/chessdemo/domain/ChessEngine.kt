@@ -1,19 +1,70 @@
 package com.chessdemo.domain
 
+/** Result of FEN parsing. */
+sealed class FenParseResult {
+    data class Success(val state: GameState) : FenParseResult()
+    data class Error(val message: String) : FenParseResult()
+}
+
 object ChessEngine {
 
-    /** Parse a FEN string into a GameState. Returns null on parse failure. */
-    fun fenToState(fen: String): GameState? {
+    /** Parse a FEN string into a GameState with detailed error reporting. */
+    fun fenToState(fen: String): FenParseResult {
         try {
             val parts = fen.trim().split(" ")
-            if (parts.size < 4) return null
+            if (parts.size < 4) return FenParseResult.Error("FEN too short: ${parts.size} parts, need at least board/turn/castling/enPassant")
 
             val boardPart = parts[0]
             val turnPart = parts[1]
             val castlingPart = parts[2]
             val epPart = parts[3]
-            val halfMove = parts.getOrNull(4)?.toIntOrNull() ?: 0
-            val fullMove = parts.getOrNull(5)?.toIntOrNull() ?: 1
+
+            // Validate board part
+            for (ch in boardPart) {
+                if (ch !in '1'..'8' && ch != '/' && ch.uppercaseChar() !in "KQRBNP") {
+                    return FenParseResult.Error("Invalid board character: '$ch'")
+                }
+            }
+
+            // Validate rank count and file width
+            var rankCount = 0
+            var fileCount = 0
+            var validRanks = true
+            for (ch in boardPart) {
+                if (ch == '/') {
+                    if (fileCount != 8) return FenParseResult.Error("Rank $rankCount has $fileCount squares (expected 8)")
+                    rankCount++
+                    fileCount = 0
+                } else if (ch in '1'..'8') {
+                    fileCount += ch.digitToInt()
+                } else {
+                    fileCount++
+                }
+            }
+            if (fileCount != 8) return FenParseResult.Error("Last rank has $fileCount squares (expected 8)")
+            if (rankCount != 7) return FenParseResult.Error("Expected 7 '/' separators, got $rankCount")
+
+            // Validate turn
+            if (turnPart != "w" && turnPart != "b") return FenParseResult.Error("Invalid turn: '$turnPart' (expected 'w' or 'b')")
+
+            // Validate castling
+            val validCastling = setOf('K', 'Q', 'k', 'q', '-')
+            for (ch in castlingPart) {
+                if (ch !in validCastling) return FenParseResult.Error("Invalid castling char: '$ch'")
+            }
+
+            // Validate en passant
+            if (epPart != "-") {
+                if (epPart.length != 2) return FenParseResult.Error("Invalid en passant: '$epPart' (expected 2 chars like 'e3')")
+                if (epPart[0] !in 'a'..'h') return FenParseResult.Error("Invalid en passant file: '${epPart[0]}'")
+                if (epPart[1] !in '1'..'8') return FenParseResult.Error("Invalid en passant rank: '${epPart[1]}'")
+            }
+
+            // Parse half/full move
+            val halfMove = parts.getOrNull(4)?.toIntOrNull()
+                ?: return FenParseResult.Error("Invalid half-move clock: '${parts.getOrNull(4)}'")
+            val fullMove = parts.getOrNull(5)?.toIntOrNull()
+                ?: return FenParseResult.Error("Invalid full-move number: '${parts.getOrNull(5)}'")
 
             val newBoard = Array(8) { arrayOfNulls<Piece?>(8) }
             var row = 0
@@ -26,7 +77,7 @@ object ChessEngine {
                 } else if (ch in '1'..'8') {
                     col += ch.digitToInt()
                 } else {
-                    val piece = Piece.fromFenChar(ch) ?: return null
+                    val piece = Piece.fromFenChar(ch) ?: return FenParseResult.Error("Unknown piece: '$ch'")
                     newBoard[row][col] = piece
                     col++
                 }
@@ -54,10 +105,16 @@ object ChessEngine {
                 halfMoveClock = halfMove,
                 fullMoveNumber = fullMove,
             )
-            return state.copyWith(newPositionHistory = listOf(state.positionKey()))
+            return FenParseResult.Success(state.copyWith(newPositionHistory = listOf(state.positionKey())))
         } catch (e: Exception) {
-            return null
+            return FenParseResult.Error("Unexpected error parsing FEN: ${e.message}")
         }
+    }
+
+    /** Convenience: returns GameState? for callers that don't care about the error message. */
+    fun fenToStateOrNull(fen: String): GameState? = when (val r = fenToState(fen)) {
+        is FenParseResult.Success -> r.state
+        is FenParseResult.Error -> null
     }
 
     private val knightOffsets = listOf(
@@ -171,21 +228,20 @@ object ChessEngine {
 
         return if (legalMoves.isEmpty()) {
             if (inCheck) {
-                val winner = if (nextTurn == Color.WHITE) "Black" else "White"
-                newStateWithHistory.copyWith(newGameOver = true, newResult = "Checkmate! $winner wins.")
+                val result = if (nextTurn == Color.WHITE) GameResult.BlackWins else GameResult.WhiteWins
+                newStateWithHistory.copyWith(newGameResult = result)
             } else {
-                newStateWithHistory.copyWith(newGameOver = true, newResult = "Stalemate! Draw.")
+                newStateWithHistory.copyWith(newGameResult = GameResult.Draw)
             }
         } else if (newStateWithHistory.halfMoveClock >= 100) {
-            newStateWithHistory.copyWith(newGameOver = true, newResult = "Draw by 50-move rule.")
+            newStateWithHistory.copyWith(newGameResult = GameResult.Draw)
         } else if (repeated >= 3) {
-            newStateWithHistory.copyWith(newGameOver = true, newResult = "Draw by threefold repetition.")
+            newStateWithHistory.copyWith(newGameResult = GameResult.Draw)
         } else if (isInsufficientMaterial(newStateWithHistory)) {
-            newStateWithHistory.copyWith(newGameOver = true, newResult = "Draw by insufficient material.")
+            newStateWithHistory.copyWith(newGameResult = GameResult.Draw)
         } else {
             if (inCheck) {
-                val side = if (nextTurn == Color.WHITE) "White" else "Black"
-                newStateWithHistory.copyWith(newResult = "$side is in check!")
+                newStateWithHistory.copyWith(newGameResult = GameResult.InProgress(nextTurn))
             } else newStateWithHistory
         }
     }
@@ -401,22 +457,34 @@ object ChessEngine {
 
     private fun isInsufficientMaterial(state: GameState): Boolean {
         val pieces = mutableListOf<Piece>()
+        val piecePositions = mutableMapOf<Piece, Pair<Int, Int>>()
         for (r in 0..7) for (c in 0..7) {
-            state.board[r][c]?.let { pieces.add(it) }
+            state.board[r][c]?.let { piece ->
+                pieces.add(piece)
+                piecePositions[piece] = piecePositions.getOrPut(piece) { r to c }
+            }
         }
         val whitePieces = pieces.filter { it.color == Color.WHITE }
         val blackPieces = pieces.filter { it.color == Color.BLACK }
 
         fun isMinor(p: Piece) = p.type in listOf(PieceType.BISHOP, PieceType.KNIGHT)
 
+        fun bishopsOnSameColor(piecesList: List<Piece>): Boolean {
+            val bishops = piecesList.filter { it.type == PieceType.BISHOP }
+            if (bishops.size != 2) return false
+            val pos1 = piecePositions[bishops[0]] ?: return false
+            val pos2 = piecePositions[bishops[1]] ?: return false
+            return (pos1.first + pos1.second) % 2 == (pos2.first + pos2.second) % 2
+        }
+
         return when {
             whitePieces.size == 1 && blackPieces.size == 1 -> true
             whitePieces.size == 1 && blackPieces.size == 2 && blackPieces.any { isMinor(it) } -> true
             blackPieces.size == 1 && whitePieces.size == 2 && whitePieces.any { isMinor(it) } -> true
-            whitePieces.size == 2 && whitePieces.count { it.type == PieceType.BISHOP } == 2
-                && blackPieces.size == 1 -> true
-            blackPieces.size == 2 && blackPieces.count { it.type == PieceType.BISHOP } == 2
-                && whitePieces.size == 1 -> true
+            whitePieces.size == 3 && whitePieces.count { it.type == PieceType.BISHOP } == 2
+                && bishopsOnSameColor(whitePieces) && blackPieces.size == 1 -> true
+            blackPieces.size == 3 && blackPieces.count { it.type == PieceType.BISHOP } == 2
+                && bishopsOnSameColor(blackPieces) && whitePieces.size == 1 -> true
             else -> false
         }
     }

@@ -20,7 +20,7 @@ fun GameScreen(viewModel: GameViewModel) {
     val context = LocalContext.current
     val gameTree = viewModel.gameTree.collectAsState().value
     val uiState = viewModel.uiState.collectAsState().value
-    val clockState = viewModel.clockState.collectAsState().value
+    val clockState = viewModel.clockManager.clockState.collectAsState().value
     val gameMode = viewModel.gameMode.collectAsState().value
     val navMode = viewModel.navMode.collectAsState().value
 

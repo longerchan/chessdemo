@@ -15,15 +15,19 @@ class GameState(
     val moveHistory: List<Move>,
     val halfMoveClock: Int = 0,
     val fullMoveNumber: Int = 1,
-    val gameOver: Boolean = false,
-    val result: String? = null,
+    val gameResult: GameResult? = null,
     val positionHistory: List<String> = emptyList(),
 ) {
+    /** Backward-compat alias for UI code that reads result as String?. */
+    val result: String? get() = gameResult?.displayText()
+
+    /** Backward-compat alias for code that reads gameOver. */
+    val gameOver: Boolean get() = gameResult?.isGameOver == true
     fun copy(): GameState {
         val newBoard = board.map { it.copyOf() }.toTypedArray()
         return GameState(
             newBoard, currentTurn, castlingRights, enPassantTarget,
-            moveHistory, halfMoveClock, fullMoveNumber, gameOver, result, positionHistory
+            moveHistory, halfMoveClock, fullMoveNumber, gameResult, positionHistory
         )
     }
 
@@ -36,8 +40,7 @@ class GameState(
         newHistory: List<Move>? = null,
         newHalfMove: Int? = null,
         newFullMove: Int? = null,
-        newGameOver: Boolean? = null,
-        newResult: String? = null,
+        newGameResult: GameResult? = null,
         newPositionHistory: List<String>? = null,
     ): GameState {
         val resolvedEnPassant = when {
@@ -53,8 +56,7 @@ class GameState(
             newHistory ?: moveHistory,
             newHalfMove ?: halfMoveClock,
             newFullMove ?: fullMoveNumber,
-            newGameOver ?: gameOver,
-            newResult ?: result,
+            newGameResult ?: gameResult,
             newPositionHistory ?: positionHistory,
         )
     }

@@ -100,6 +100,18 @@ object PolyglotBook {
     /** Check if book is loaded. */
     fun isLoaded(): Boolean = loaded
 
+    /** Adapter for BookProvider / OpeningBookProvider interface. Polyglot uses FEN-based lookup. */
+    fun lookup(state: com.chessdemo.domain.GameState): List<Pair<String, Int>> {
+        return lookupByState(state)
+    }
+
+    /** Look up moves for a GameState using FEN from StockfishAI. */
+    fun lookupByState(state: com.chessdemo.domain.GameState): List<Pair<String, Int>> {
+        if (!loaded) return emptyList()
+        val fen = com.chessdemo.ai.StockfishAI.stateToFenPublic(state)
+        return lookupByFen(fen).map { it.uci to it.weight }
+    }
+
     /** Clear loaded book. */
     fun close() {
         entries = null

@@ -283,8 +283,7 @@ fun BoardEditorDialog(
                         moveHistory = emptyList(),
                         halfMoveClock = halfMove,
                         fullMoveNumber = fullMove,
-                        gameOver = false,
-                        result = null,
+                        gameResult = null,
                         positionHistory = emptyList(),
                     )
 

@@ -86,35 +86,18 @@ object StockfishAI {
 
     fun findBestMoveFromFen(fen: String, state: GameState? = null): Move? {
         ensureEngineInitialized()
-        // Check Polyglot external book first
-        if (PolyglotBook.isLoaded()) {
-            val bookMoves = PolyglotBook.lookupByFen(fen)
-            if (bookMoves.isNotEmpty()) {
-                val legalMoves = if (state != null)
-                    com.chessdemo.domain.ChessEngine.getLegalMoves(state, state.currentTurn)
-                else emptyList()
-                val selected = weightedRandom(bookMoves)
-                val move = uciToMove(selected.uci)
-                if (move != null && (legalMoves.isEmpty() || legalMoves.any {
-                    it.fromRow == move.fromRow && it.fromCol == move.fromCol &&
-                    it.toRow == move.toRow && it.toCol == move.toCol
-                })) {
-                    android.util.Log.d(TAG, "findBestMove: POLYGLOT BOOK=$selected.uci")
-                    return move
-                }
-            }
-        }
-        // Fallback to built-in opening book
+
+        // Unified opening book lookup (Polyglot + built-in)
         if (state != null) {
-            val bookMove = OpeningBook.selectMove(state)
-            if (bookMove != null) {
-                val uci = "${("abcdefgh"[bookMove.fromCol])}${8 - bookMove.fromRow}${("abcdefgh"[bookMove.toCol])}${8 - bookMove.toRow}"
-                android.util.Log.d(TAG, "findBestMove: BOOK MOVE=$uci moveNum=${state.fullMoveNumber}")
-                return bookMove
+            val bookMoves = buildBookMoves(state)
+            if (bookMoves.isNotEmpty()) {
+                val legalMoves = com.chessdemo.domain.ChessEngine.getLegalMoves(state, state.currentTurn)
+                val move = selectBookMove(bookMoves, legalMoves)
+                if (move != null) return move
             }
         }
 
-        val depth = 0 // Don't limit by depth when using movetime
+        val depth = 0
         val moveTime = difficulty.moveTime
         val wTime = whiteTimeMs.toInt()
         val bTime = blackTimeMs.toInt()
@@ -132,6 +115,34 @@ object StockfishAI {
         android.util.Log.d(TAG, "findBestMoveFromFen: result=$bestMoveUci")
 
         return bestMoveUci?.let { uciToMove(it) }
+    }
+
+    /** Build unified book move list from Polyglot + OpeningBook. */
+    private fun buildBookMoves(state: GameState): List<Pair<String, Int>> {
+        val results = mutableListOf<Pair<String, Int>>()
+        val seen = mutableSetOf<String>()
+
+        // Polyglot external book
+        if (PolyglotBook.isLoaded()) {
+            val fen = stateToFenPublic(state)
+            for (bm in PolyglotBook.lookupByFen(fen)) {
+                if (bm.uci !in seen) {
+                    seen.add(bm.uci)
+                    results.add(bm.uci to bm.weight)
+                    android.util.Log.d(TAG, "findBestMove: POLYGLOT BOOK=${bm.uci}")
+                }
+            }
+        }
+
+        // Built-in opening book
+        for ((uci, weight) in OpeningBook.lookup(state)) {
+            if (uci !in seen) {
+                seen.add(uci)
+                results.add(uci to weight)
+            }
+        }
+
+        return results
     }
 
     fun getLatestInfo(): String {
@@ -276,16 +287,5 @@ object StockfishAI {
             toCol = toCol,
             promotionType = promotionType,
         )
-    }
-
-    /** Weighted random selection from a list of book moves. */
-    private fun weightedRandom(moves: List<PolyglotBook.BookMove>): PolyglotBook.BookMove {
-        val totalWeight = moves.sumOf { it.weight }
-        var random = (Math.random() * totalWeight).toInt()
-        for (bookMove in moves) {
-            random -= bookMove.weight
-            if (random <= 0) return bookMove
-        }
-        return moves.last()
     }
 }

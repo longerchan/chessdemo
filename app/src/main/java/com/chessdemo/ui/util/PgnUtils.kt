@@ -127,7 +127,7 @@ fun parsePgn(pgnText: String): Pair<String, List<Move>>? {
             .split(Regex("\\s+"))
             .filter { it.isNotBlank() && !it.matches(Regex("^\\d+$")) }
 
-        val initialState = ChessEngine.fenToState(fen) ?: return null
+        val initialState = ChessEngine.fenToStateOrNull(fen) ?: return null
         val moves = mutableListOf<Move>()
         var currentState = initialState
 
