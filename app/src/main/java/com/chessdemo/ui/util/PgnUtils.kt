@@ -122,20 +122,27 @@ fun parsePgn(pgnText: String): Pair<String, List<Move>>? {
             .replace(Regex("[+#]"), "")             // check/mate suffixes
             .trim()
 
-        val moveParts = moveText
-            .replace(Regex("\\d+\\s*\\.\\s*"), " ")  // remove move numbers like "1." "12."
-            .split(Regex("\\s+"))
-            .filter { it.isNotBlank() && !it.matches(Regex("^\\d+$")) }
-
-        val initialState = ChessEngine.fenToStateOrNull(fen) ?: return null
+        // Parse moves: extract pairs like "1." "1..." "2." "2..." preserving order
+        val movePairRegex = Regex("(\\d+)\\.\\s*([A-Za-z0-9x=+\\#-]+)\\.?\\s*\\.?\\s*([A-Za-z0-9x=+\\#-]+)?")
         val moves = mutableListOf<Move>()
+        val initialState = ChessEngine.fenToStateOrNull(fen) ?: return null
         var currentState = initialState
 
-        for (moveStr in moveParts) {
-            val legalMoves = ChessEngine.getLegalMoves(currentState)
-            val move = findMoveByAlgebraic(moveStr, currentState, legalMoves) ?: return null
-            moves.add(move)
-            currentState = ChessEngine.makeMove(currentState, move)
+        for (match in movePairRegex.findAll(moveText)) {
+            val whiteMove = match.groupValues[2].takeIf { it.isNotBlank() }
+            val blackMove = match.groupValues[3].takeIf { it.isNotBlank() }
+            if (whiteMove != null) {
+                val legalMoves = ChessEngine.getLegalMoves(currentState)
+                val move = findMoveByAlgebraic(whiteMove, currentState, legalMoves) ?: return null
+                moves.add(move)
+                currentState = ChessEngine.makeMove(currentState, move)
+            }
+            if (blackMove != null) {
+                val legalMoves = ChessEngine.getLegalMoves(currentState)
+                val move = findMoveByAlgebraic(blackMove, currentState, legalMoves) ?: return null
+                moves.add(move)
+                currentState = ChessEngine.makeMove(currentState, move)
+            }
         }
 
         return fen to moves

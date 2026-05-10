@@ -44,23 +44,5 @@ data class Piece(val type: PieceType, val color: Color) {
             return Piece(type, color)
         }
 
-        fun fromChar(c: Char): Piece? {
-            val (color, type) = when (c) {
-                'K' -> Color.WHITE to PieceType.KING
-                'Q' -> Color.WHITE to PieceType.QUEEN
-                'R' -> Color.WHITE to PieceType.ROOK
-                'B' -> Color.WHITE to PieceType.BISHOP
-                'N' -> Color.WHITE to PieceType.KNIGHT
-                'P' -> Color.WHITE to PieceType.PAWN
-                'k' -> Color.BLACK to PieceType.KING
-                'q' -> Color.BLACK to PieceType.QUEEN
-                'r' -> Color.BLACK to PieceType.ROOK
-                'b' -> Color.BLACK to PieceType.BISHOP
-                'n' -> Color.BLACK to PieceType.KNIGHT
-                'p' -> Color.BLACK to PieceType.PAWN
-                else -> return null
-            }
-            return Piece(type, color)
-        }
     }
 }

@@ -118,7 +118,6 @@ class GameViewModel(
         clockManager.reset()
         _gameTree.value = GameTree.fromInitial()
         _uiState.value = GameUiState(boardFlipped = _uiState.value.boardFlipped)
-        _gameMode.value = GameMode.PLAY_WHITE
         _navMode.value = NavMode.PLAYING
         StockfishAI.resetClocks()
         clockManager.startClockIfNeeded(viewModelScope)

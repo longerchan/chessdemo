@@ -31,20 +31,24 @@ class AiEngineManager(
     private var analysisJob: Job? = null
 
     fun triggerAiMove() {
-        val currentGameState = getGameState()
-        val currentAiTurn = currentGameState.currentTurn
         if (getGameTree().currentState().gameOver) return
 
         aiJob?.cancel()
         aiJob = scope.launch {
             updateUi { state -> state.copy(aiThinking = true) }
-            updateClockStateForAi(true, currentAiTurn)
             delay(300)
             if (!isActive) {
                 updateUi { state -> state.copy(aiThinking = false) }
-                updateClockStateForAi(false, currentAiTurn)
                 return@launch
             }
+
+            // Re-check state after delay to avoid stale-state search
+            val stateToSearch = getGameTree().currentState()
+            if (stateToSearch.gameOver || !isActive) {
+                updateUi { state -> state.copy(aiThinking = false) }
+                return@launch
+            }
+            val expectedTurn = stateToSearch.currentTurn
 
             val searchResult = withContext(Dispatchers.IO) {
                 try {
@@ -59,7 +63,7 @@ class AiEngineManager(
                             delay(100)
                         }
                     }
-                    val fen = StockfishAI.stateToFenPublic(currentGameState)
+                    val fen = StockfishAI.stateToFenPublic(stateToSearch)
                     val bestMove = StockfishAI.findBestMoveFromFen(fen)
                     pollJob.cancel()
                     bestMove to StockfishAI.getLatestInfo()
@@ -70,7 +74,12 @@ class AiEngineManager(
 
             if (!isActive) {
                 updateUi { state -> state.copy(aiThinking = false) }
-                updateClockStateForAi(false, currentAiTurn)
+                return@launch
+            }
+
+            // Bail if the turn changed during search (e.g. user made a move)
+            if (getGameTree().currentState().currentTurn != expectedTurn) {
+                updateUi { state -> state.copy(aiThinking = false) }
                 return@launch
             }
 
@@ -87,7 +96,6 @@ class AiEngineManager(
                 vibrateMove()
             }
             updateUi { state -> state.copy(aiThinking = false) }
-            updateClockStateForAi(false, currentAiTurn)
 
             if (getGameMode() == GameMode.COMPUTER_VS_COMPUTER) {
                 checkAndTriggerAi()
@@ -102,7 +110,6 @@ class AiEngineManager(
                 val state = getGameTree().currentState()
                 if (state.gameOver) break
                 updateUi { state -> state.copy(aiThinking = true) }
-                updateClockStateForAi(true, state.currentTurn)
                 delay(300)
                 if (!isActive) break
 
@@ -123,7 +130,6 @@ class AiEngineManager(
                     vibrateMove()
                 }
                 updateUi { state -> state.copy(aiThinking = false) }
-                updateClockStateForAi(false, state.currentTurn)
                 delay(500)
             }
         }
@@ -190,11 +196,6 @@ class AiEngineManager(
     }
 
     // --- Private helpers ---
-
-    private fun updateClockStateForAi(active: Boolean, aiTurn: PieceColor) {
-        // This is done via the clockManager externally; we don't have direct access.
-        // For now, the clock state updates are handled in GameViewModel's LaunchedEffect.
-    }
 
     private fun playMoveSound() {
         com.chessdemo.ui.util.playMoveSound(soundPool)

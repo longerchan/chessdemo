@@ -4,9 +4,16 @@ object StockfishEngine {
 
     private const val TT_SIZE_MB = 16
     private var initialized = false
+    var nativeLoaded = false
+        private set
 
     init {
-        System.loadLibrary("stockfish")
+        try {
+            System.loadLibrary("stockfish")
+            nativeLoaded = true
+        } catch (e: UnsatisfiedLinkError) {
+            android.util.Log.e("StockfishEngine", "Failed to load native library: ${e.message}")
+        }
     }
 
     @JvmStatic

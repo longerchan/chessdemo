@@ -29,7 +29,6 @@ object ChessEngine {
             // Validate rank count and file width
             var rankCount = 0
             var fileCount = 0
-            var validRanks = true
             for (ch in boardPart) {
                 if (ch == '/') {
                     if (fileCount != 8) return FenParseResult.Error("Rank $rankCount has $fileCount squares (expected 8)")
@@ -456,34 +455,30 @@ object ChessEngine {
     }
 
     private fun isInsufficientMaterial(state: GameState): Boolean {
-        val pieces = mutableListOf<Piece>()
-        val piecePositions = mutableMapOf<Piece, Pair<Int, Int>>()
+        val pieces = mutableListOf<Pair<Piece, Pair<Int, Int>>>()
         for (r in 0..7) for (c in 0..7) {
-            state.board[r][c]?.let { piece ->
-                pieces.add(piece)
-                piecePositions[piece] = piecePositions.getOrPut(piece) { r to c }
-            }
+            state.board[r][c]?.let { piece -> pieces.add(piece to (r to c)) }
         }
-        val whitePieces = pieces.filter { it.color == Color.WHITE }
-        val blackPieces = pieces.filter { it.color == Color.BLACK }
+        val whitePieces = pieces.filter { it.first.color == Color.WHITE }
+        val blackPieces = pieces.filter { it.first.color == Color.BLACK }
 
         fun isMinor(p: Piece) = p.type in listOf(PieceType.BISHOP, PieceType.KNIGHT)
 
-        fun bishopsOnSameColor(piecesList: List<Piece>): Boolean {
-            val bishops = piecesList.filter { it.type == PieceType.BISHOP }
+        fun bishopsOnSameColor(piecesList: List<Pair<Piece, Pair<Int, Int>>>): Boolean {
+            val bishops = piecesList.filter { it.first.type == PieceType.BISHOP }
             if (bishops.size != 2) return false
-            val pos1 = piecePositions[bishops[0]] ?: return false
-            val pos2 = piecePositions[bishops[1]] ?: return false
+            val pos1 = bishops[0].second
+            val pos2 = bishops[1].second
             return (pos1.first + pos1.second) % 2 == (pos2.first + pos2.second) % 2
         }
 
         return when {
             whitePieces.size == 1 && blackPieces.size == 1 -> true
-            whitePieces.size == 1 && blackPieces.size == 2 && blackPieces.any { isMinor(it) } -> true
-            blackPieces.size == 1 && whitePieces.size == 2 && whitePieces.any { isMinor(it) } -> true
-            whitePieces.size == 3 && whitePieces.count { it.type == PieceType.BISHOP } == 2
+            whitePieces.size == 1 && blackPieces.size == 2 && blackPieces.any { isMinor(it.first) } -> true
+            blackPieces.size == 1 && whitePieces.size == 2 && whitePieces.any { isMinor(it.first) } -> true
+            whitePieces.size == 3 && whitePieces.count { it.first.type == PieceType.BISHOP } == 2
                 && bishopsOnSameColor(whitePieces) && blackPieces.size == 1 -> true
-            blackPieces.size == 3 && blackPieces.count { it.type == PieceType.BISHOP } == 2
+            blackPieces.size == 3 && blackPieces.count { it.first.type == PieceType.BISHOP } == 2
                 && bishopsOnSameColor(blackPieces) && whitePieces.size == 1 -> true
             else -> false
         }
