@@ -55,6 +55,7 @@ object StockfishEngine {
 
     fun initialize() {
         if (!initialized) {
+            if (!nativeLoaded) throw IllegalStateException("Native library not loaded")
             nativeInit(TT_SIZE_MB)
             initialized = true
         }

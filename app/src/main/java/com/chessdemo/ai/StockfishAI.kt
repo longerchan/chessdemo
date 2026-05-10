@@ -234,25 +234,4 @@ object StockfishAI {
         return sb.toString()
     }
 
-    private fun moveToUci(move: Move): String {
-        val files = "abcdefgh"
-        val fromRank = 8 - move.fromRow
-        val toRank = 8 - move.toRow
-        val from = "${files[move.fromCol]}$fromRank"
-        val to = "${files[move.toCol]}$toRank"
-        // Only include promotion letter for actual pawn promotions (reaching rank 1 or 8)
-        val promo = if (toRank == 1 || toRank == 8) {
-            when (move.promotionType) {
-                PieceType.QUEEN -> "q"
-                PieceType.ROOK -> "r"
-                PieceType.BISHOP -> "b"
-                PieceType.KNIGHT -> "n"
-                else -> "q"
-            }
-        } else {
-            ""
-        }
-        return "$from$to$promo"
-    }
-
 }

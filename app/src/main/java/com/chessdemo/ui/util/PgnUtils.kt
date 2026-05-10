@@ -6,7 +6,8 @@ fun generatePgn(tree: com.chessdemo.domain.GameTree): String {
     val moves = tree.moveList()
     if (moves.isEmpty()) return "[Result \"*\"]\n\n*"
     val sb = StringBuilder()
-    sb.append("[Result \"${tree.currentState().result ?: "*"}\"]\n\n")
+    val pgnResult = tree.currentState().gameResult?.pgnResult() ?: "*"
+    sb.append("[Result \"$pgnResult\"]\n\n")
     var moveNum = 1
     for (i in moves.indices step 2) {
         sb.append("$moveNum. ")
@@ -19,7 +20,7 @@ fun generatePgn(tree: com.chessdemo.domain.GameTree): String {
         moveNum++
     }
     if (tree.currentState().gameOver) {
-        sb.append(" ${tree.currentState().result}")
+        sb.append("$pgnResult")
     }
     return sb.toString().trim()
 }
@@ -182,6 +183,6 @@ fun findMoveByAlgebraic(algebraic: String, state: GameState, legalMoves: List<Mo
             state.board[move.fromRow][move.fromCol]?.type == pieceType &&
             (sourceFile == null || move.fromCol == sourceFile) &&
             (sourceRank == null || move.fromRow == 7 - sourceRank) &&
-            (pieceType != PieceType.PAWN || move.toRow == 0 || move.toRow == 7 || move.promotionType == promoType)
+            (pieceType != PieceType.PAWN || move.toRow != 0 && move.toRow != 7 || move.promotionType == promoType)
     }
 }

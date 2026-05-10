@@ -18,4 +18,12 @@ sealed class GameResult {
             null -> ""
         }
     }
+
+    /** Standard PGN result string. */
+    fun pgnResult(): String = when (this) {
+        WhiteWins -> "1-0"
+        BlackWins -> "0-1"
+        Draw -> "1/2-1/2"
+        else -> "*"
+    }
 }
