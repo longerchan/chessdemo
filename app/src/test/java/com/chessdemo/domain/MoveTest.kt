@@ -1,0 +1,45 @@
+package com.chessdemo.domain
+
+import org.junit.Assert.*
+import org.junit.Test
+
+class MoveTest {
+
+    @Test
+    fun `toString produces UCI notation for normal move`() {
+        val move = Move(6, 4, 4, 4) // e2-e4
+        assertEquals("e2e4", move.toString())
+    }
+
+    @Test
+    fun `toString produces UCI notation for non-queen promotion`() {
+        val move = Move(1, 4, 0, 4, promotionType = PieceType.KNIGHT) // e7-e8=N
+        assertEquals("e7e8=N", move.toString())
+    }
+
+    @Test
+    fun `toString for queen promotion has no suffix`() {
+        val move = Move(1, 4, 0, 4, promotionType = PieceType.QUEEN) // e7-e8=Q (default, no suffix)
+        assertEquals("e7e8", move.toString())
+    }
+
+    @Test
+    fun `default promotion is queen`() {
+        val move = Move(1, 4, 0, 4)
+        assertEquals(PieceType.QUEEN, move.promotionType)
+    }
+
+    @Test
+    fun `isCastling flag is preserved`() {
+        val move = Move(7, 4, 7, 6, isCastling = true)
+        assertTrue(move.isCastling)
+        assertEquals("e1g1", move.toString())
+    }
+
+    @Test
+    fun `isEnPassant flag is preserved`() {
+        val move = Move(4, 4, 3, 5, isEnPassant = true)
+        assertTrue(move.isEnPassant)
+        assertEquals("e4f5", move.toString())
+    }
+}
