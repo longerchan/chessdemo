@@ -52,6 +52,15 @@ Java_com_chessdemo_ai_StockfishEngine_nativeInit(JNIEnv* env, jobject thiz, jint
 
     eng->search_clear();
 
+    // Set ALL callbacks — empty std::function throws bad_function_call at runtime
+    eng->set_on_update_no_moves([](const Engine::InfoShort&) {
+        // Called when there are no legal moves (checkmate/stalemate); handled via on_bestmove
+    });
+
+    eng->set_on_iter([](const Engine::InfoIter&) {
+        // Iteration-level info; full search info comes via on_update_full
+    });
+
     eng->set_on_bestmove([](std::string_view bestmove, std::string_view /*ponder*/) {
         __android_log_print(ANDROID_LOG_INFO, "Stockfish", "bestmove callback: %.*s",
                            (int)bestmove.size(), bestmove.data());
