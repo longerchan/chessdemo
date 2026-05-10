@@ -2,7 +2,8 @@ package com.chessdemo.ai
 
 object StockfishEngine {
 
-    private const val TT_SIZE_MB = 16
+    private const val TT_SIZE_MB = 64
+    private const val THREADS = 4
     private var initialized = false
     var nativeLoaded = false
         private set
@@ -57,6 +58,7 @@ object StockfishEngine {
         if (!initialized) {
             if (!nativeLoaded) throw IllegalStateException("Native library not loaded")
             nativeInit(TT_SIZE_MB)
+            nativeSetOption("Threads", THREADS.toString())
             initialized = true
         }
     }

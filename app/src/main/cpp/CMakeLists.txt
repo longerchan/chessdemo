@@ -46,6 +46,9 @@ target_compile_definitions(stockfish PRIVATE
     NO_NUMA
 )
 
+# Optimization: O3 is critical for Stockfish's NNUE evaluation speed
+target_compile_options(stockfish PRIVATE -O3 -fno-exceptions -fno-rtti)
+
 if(${ANDROID_ABI} STREQUAL "arm64-v8a")
     target_compile_definitions(stockfish PRIVATE
         USE_NEON=8

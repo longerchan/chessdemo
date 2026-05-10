@@ -10,10 +10,10 @@ object StockfishAI {
 
     enum class Difficulty(val label: String, val depth: Int, val moveTime: Int) {
         BEGINNER("初级", 6, 1000),
-        EASY("简单", 10, 3000),
-        MEDIUM("中级", 15, 5000),
-        HARD("困难", 20, 8000),
-        GRANDMASTER("大师", 28, 15000),
+        EASY("简单", 10, 2000),
+        MEDIUM("中级", 22, 5000),
+        HARD("困难", 28, 8000),
+        GRANDMASTER("大师", 99, 15000),
     }
 
     @Volatile var difficulty: Difficulty = Difficulty.MEDIUM
@@ -75,9 +75,16 @@ object StockfishAI {
     }
 
     fun setEloForDifficulty(diff: Difficulty) {
-        val elo = eloForDifficulty(diff)
-        StockfishEngine.setOption("UCI_LimitStrength", "true")
-        StockfishEngine.setOption("UCI_Elo", elo.toString())
+        when (diff) {
+            Difficulty.BEGINNER, Difficulty.EASY -> {
+                val elo = eloForDifficulty(diff)
+                StockfishEngine.setOption("UCI_LimitStrength", "true")
+                StockfishEngine.setOption("UCI_Elo", elo.toString())
+            }
+            else -> {
+                StockfishEngine.setOption("UCI_LimitStrength", "false")
+            }
+        }
     }
 
     fun findBestMove(state: GameState): Move? {
