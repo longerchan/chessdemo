@@ -37,12 +37,6 @@ ChessDemo is an Android chess app built with Kotlin and Jetpack Compose. It supp
 ./gradlew test
 ```
 
-### Run a single test class
-
-```bash
-./gradlew test --tests "com.chessdemo.domain.ChessEngineTest"
-```
-
 ### Lint
 
 ```bash

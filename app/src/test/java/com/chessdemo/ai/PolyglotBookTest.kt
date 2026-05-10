@@ -35,6 +35,7 @@ class PolyglotBookTest {
         buf.position(8 + 4 + 4) // skip header
         buf.position(buf.position() + 5 + 5) // skip string pool
         val storedHash1 = buf.int.toLong() and 0xFFFFFFFFL
+        buf.position(buf.position() + 6) // skip 2B offset + 2B weight + 2B padding
         val storedHash2 = buf.int.toLong() and 0xFFFFFFFFL
         assertEquals(lowHash, storedHash1)
         assertEquals(highHash, storedHash2)
@@ -74,10 +75,8 @@ class PolyglotBookTest {
         val poolSize = verifyBuf.int
         verifyBuf.position(verifyBuf.position() + poolSize)
         val storedHash1 = verifyBuf.int.toLong() and 0xFFFFFFFFL
-        val storedWeight1 = verifyBuf.short.toInt() and 0xFFFF
-        verifyBuf.position(verifyBuf.position() + 2) // skip padding
+        verifyBuf.position(verifyBuf.position() + 6) // skip 2B offset + 2B weight + 2B padding
         val storedHash2 = verifyBuf.int.toLong() and 0xFFFFFFFFL
-        val storedWeight2 = verifyBuf.short.toInt() and 0xFFFF
         assertEquals("Entry 0 hash should match", minOf(hash1, hash2), storedHash1)
         assertEquals("Entry 1 hash should match", maxOf(hash1, hash2), storedHash2)
 
@@ -225,19 +224,18 @@ class PolyglotBookTest {
         buf.putInt(stringPoolSize)
 
         // String pool (right after header, per parseBinary)
-        val offsets = mutableListOf<Int>()
         for ((_, moveAndWeight) in entries) {
-            offsets.add(buf.position() - headerSize)
             buf.put(moveAndWeight.first.toByteArray())
             buf.put(0.toByte())
         }
 
-        // Entries
+        // Entries (10 bytes each: 4 hash + 2 stringIndex + 2 weight + 2 padding)
         for ((idx, entry) in entries.withIndex()) {
             val (hash, moveAndWeight) = entry
             buf.putInt((hash and 0xFFFFFFFFL).toInt())
-            buf.putShort((offsets[idx] and 0xFFFF).toShort())
+            buf.putShort(idx.toShort()) // string pool index (0-based)
             buf.putShort((moveAndWeight.second and 0xFFFF).toShort())
+            buf.putShort(0.toShort()) // 2 bytes padding
         }
 
         return buf.array()
