@@ -16,6 +16,9 @@ build/
 *.iml
 local.properties
 
+# Claude
+CLAUDE.md
+
 # OS
 .DS_Store
 Thumbs.db
