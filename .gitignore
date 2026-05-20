@@ -18,6 +18,7 @@ local.properties
 
 # Claude
 CLAUDE.md
+.claude/
 
 # OS
 .DS_Store
