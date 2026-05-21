@@ -67,19 +67,24 @@ fun extractMultiPvIndex(info: String): Int? {
 }
 
 fun extractEvalCp(info: String, pvLines: Map<Int, String>): Int? {
+    // Parse from formatted PV line: "d22  +0.20  e2→e4"
     pvLines[1]?.let { line ->
-        val cpIdx = line.indexOf("cp ")
-        if (cpIdx >= 0) {
-            val afterCp = line.substring(cpIdx + 3)
-            val spaceIdx = afterCp.indexOf(' ')
-            val cpStr = if (spaceIdx >= 0) afterCp.substring(0, spaceIdx) else afterCp
-            return cpStr.toIntOrNull()
+        Regex("""[+-]?\d+\.\d{2}""").find(line)?.let {
+            return (it.value.toDouble() * 100).toInt()
         }
     }
-    val parts = info.split(" ")
-    val cpIdx = parts.indexOf("cp")
-    if (cpIdx >= 0 && cpIdx + 1 < parts.size) {
-        return parts[cpIdx + 1].toIntOrNull()
+    // Parse from formatted thinkingInfo: "eval: 0.20"
+    val evalPrefix = "eval: "
+    val evalIdx = info.indexOf(evalPrefix)
+    if (evalIdx >= 0) {
+        val after = info.substring(evalIdx + evalPrefix.length).trimStart()
+        val end = after.indexOfAny(charArrayOf(' ', '\n', '\r'))
+        val evalStr = if (end >= 0) after.substring(0, end) else after
+        return (evalStr.toDoubleOrNull()?.let { (it * 100).toInt() })
+    }
+    // Fallback: scan entire string for a decimal
+    Regex("""[+-]?\d+\.\d{2}""").find(info)?.let {
+        return (it.value.toDouble() * 100).toInt()
     }
     return null
 }

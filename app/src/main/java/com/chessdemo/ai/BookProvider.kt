@@ -61,7 +61,7 @@ fun uciToMove(uci: String): Move? {
             'n' -> com.chessdemo.domain.PieceType.KNIGHT
             else -> com.chessdemo.domain.PieceType.QUEEN
         }
-    } else com.chessdemo.domain.PieceType.QUEEN
+    } else null
     return Move(fromRow, fromCol, toRow, toCol, promotionType = promotionType)
 }
 

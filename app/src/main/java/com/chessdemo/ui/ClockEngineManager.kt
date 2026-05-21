@@ -60,6 +60,15 @@ class ClockEngineManager {
         )
     }
 
+    fun applyIncrement(turn: Color) {
+        val clock = _clockState.value
+        _clockState.value = if (turn == Color.WHITE) {
+            clock.copy(whiteTimeMs = clock.whiteTimeMs + clock.incrementMs)
+        } else {
+            clock.copy(blackTimeMs = clock.blackTimeMs + clock.incrementMs)
+        }
+    }
+
     fun reset() {
         clockJob?.cancel()
         _clockState.value = ClockState()

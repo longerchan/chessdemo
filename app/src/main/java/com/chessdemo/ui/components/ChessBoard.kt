@@ -198,7 +198,7 @@ private fun BoardCanvas(
 
                 // PV indicator
                 val isPvTarget = pvMoves.any {
-                    it.length >= 4 && it[0] - 'a' == col && 7 - (it[1] - '1') == row
+                    it.length >= 5 && it[3] - 'a' == col && 7 - (it[4] - '1') == row
                 }
                 if (isPvTarget && gameState.board[row][col] == null) {
                     drawCircle(

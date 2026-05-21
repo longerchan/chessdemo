@@ -91,6 +91,7 @@ class GameViewModel(
         getClockState = { clockManager.clockState.value },
         soundPool = soundPool,
         vibrator = vibrator,
+        applyClockIncrement = { color -> clockManager.applyIncrement(color) },
     )
 
     fun setGameMode(mode: GameMode) {
@@ -121,6 +122,7 @@ class GameViewModel(
         _navMode.value = NavMode.PLAYING
         StockfishAI.resetClocks()
         clockManager.startClockIfNeeded(viewModelScope)
+        savedStateHandle["current_fen"] = StockfishAI.stateToFenPublic(_gameTree.value.currentState())
     }
 
     fun goBack() {
@@ -136,6 +138,7 @@ class GameViewModel(
             thinkingInfo = "",
             analysisPvLines = emptyMap(),
         )
+        savedStateHandle["current_fen"] = StockfishAI.stateToFenPublic(_gameTree.value.currentState())
     }
 
     fun goForward() {
@@ -146,6 +149,7 @@ class GameViewModel(
             legalMoves = emptyList(),
             lastMove = prevTree.moveList().lastOrNull(),
         )
+        savedStateHandle["current_fen"] = StockfishAI.stateToFenPublic(_gameTree.value.currentState())
     }
 
     fun goToMove(index: Int) {
@@ -159,6 +163,7 @@ class GameViewModel(
             legalMoves = emptyList(),
             lastMove = tree.moveList().getOrNull(index - 1),
         )
+        savedStateHandle["current_fen"] = StockfishAI.stateToFenPublic(_gameTree.value.currentState())
     }
 
     fun triggerComputerVsComputer() {
@@ -265,6 +270,7 @@ class GameViewModel(
                         legalMoves = emptyList(),
                         thinkingInfo = "",
                     )
+                    savedStateHandle["current_fen"] = StockfishAI.stateToFenPublic(_gameTree.value.currentState())
                 }
             }
         }
@@ -281,6 +287,7 @@ class GameViewModel(
             thinkingInfo = "",
             analysisPvLines = emptyMap(),
         )
+        savedStateHandle["current_fen"] = StockfishAI.stateToFenPublic(_gameTree.value.currentState())
     }
 
     fun copyFenToClipboard(): String {
@@ -365,8 +372,11 @@ class GameViewModel(
     }
 
     private fun executeMove(move: Move) {
+        val movingColor = _gameTree.value.currentState().currentTurn
         applyMoveInternal(move)
-        StockfishAI.recordMove(_gameTree.value.currentState().currentTurn, 0L)
+        // elapsedMs=0: human clock is managed by ClockEngineManager tick loop; StockfishAI clock is only for AI time management
+        clockManager.applyIncrement(movingColor)
+        StockfishAI.recordMove(movingColor, 0L)
         playMoveSound(soundPool)
         vibrateMove(vibrator)
 

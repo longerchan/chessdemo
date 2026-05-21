@@ -11,7 +11,7 @@ object ChessEngine {
     /** Parse a FEN string into a GameState with detailed error reporting. */
     fun fenToState(fen: String): FenParseResult {
         try {
-            val parts = fen.trim().split(" ")
+            val parts = fen.trim().split("\\s+".toRegex())
             if (parts.size < 4) return FenParseResult.Error("FEN too short: ${parts.size} parts, need at least board/turn/castling/enPassant")
 
             val boardPart = parts[0]
@@ -51,12 +51,19 @@ object ChessEngine {
             for (ch in castlingPart) {
                 if (ch !in validCastling) return FenParseResult.Error("Invalid castling char: '$ch'")
             }
+            if (castlingPart != "-" && castlingPart.contains('-')) {
+                return FenParseResult.Error("Invalid castling: '-' combined with other rights: '$castlingPart'")
+            }
 
             // Validate en passant
             if (epPart != "-") {
                 if (epPart.length != 2) return FenParseResult.Error("Invalid en passant: '$epPart' (expected 2 chars like 'e3')")
                 if (epPart[0] !in 'a'..'h') return FenParseResult.Error("Invalid en passant file: '${epPart[0]}'")
                 if (epPart[1] !in '1'..'8') return FenParseResult.Error("Invalid en passant rank: '${epPart[1]}'")
+                val expectedRank = if (turnPart == "w") '6' else '3'
+                if (epPart[1] != expectedRank) {
+                    return FenParseResult.Error("En passant rank '${epPart[1]}' inconsistent with turn '$turnPart' (expected '$expectedRank')")
+                }
             }
 
             // Parse half/full move
@@ -152,6 +159,9 @@ object ChessEngine {
                 newEnPassant = ((move.fromRow + move.toRow) / 2) to move.fromCol
             } else {
                 clearEnPassant = true
+                if (state.board[move.toRow][move.toCol] != null) {
+                    isCapture = true
+                }
             }
             newHalfMove = 0
         } else {
@@ -174,7 +184,7 @@ object ChessEngine {
         }
 
         if (piece.type == PieceType.PAWN && (move.toRow == 0 || move.toRow == 7)) {
-            newBoard[move.toRow][move.toCol] = Piece(move.promotionType, piece.color)
+            newBoard[move.toRow][move.toCol] = Piece(move.promotionType ?: PieceType.QUEEN, piece.color)
         }
 
         if (piece.type == PieceType.KING) {
@@ -219,7 +229,8 @@ object ChessEngine {
         val newStateWithHistory = newState.copyWith(newPositionHistory = updatedPositionHistory)
 
         val legalMoves = getLegalMoves(newStateWithHistory, nextTurn)
-        val kingPos = newStateWithHistory.findKing(nextTurn)!!
+        val kingPos = newStateWithHistory.findKing(nextTurn)
+        if (kingPos == null) return state
         val inCheck = isSquareAttacked(newStateWithHistory, kingPos.first, kingPos.second,
             if (nextTurn == Color.WHITE) Color.BLACK else Color.WHITE)
 

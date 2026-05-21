@@ -264,11 +264,11 @@ fun BoardEditorDialog(
                     // Check pawns not on rank 1 or 8
                     for (col in 0..7) {
                         if (editorBoard[0][col]?.type == PieceType.PAWN) {
-                            errorMsg = "白兵不能在第1行"
+                            errorMsg = "白兵不能在第8行"
                             return@TextButton
                         }
                         if (editorBoard[7][col]?.type == PieceType.PAWN) {
-                            errorMsg = "黑兵不能在第8行"
+                            errorMsg = "黑兵不能在第1行"
                             return@TextButton
                         }
                     }

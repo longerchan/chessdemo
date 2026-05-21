@@ -91,7 +91,8 @@ fun GameScreen(viewModel: GameViewModel) {
         ChessBoard(
             gameState = currentState, selectedSquare = uiState.selectedSquare, legalMoves = uiState.legalMoves,
             lastMove = uiState.lastMove, boardFlipped = uiState.boardFlipped,
-            pvMoves = uiState.thinkingInfo.split(" pv ").getOrElse(1) { "" }.split(" ").filter { it.isNotEmpty() }.take(5),
+            pvMoves = uiState.thinkingInfo.split("pv:").getOrElse(1) { "" }
+                .trim().split(" ").filter { it.isNotEmpty() }.take(5),
             evalCp = currentEval,
             onSquareClick = { row, col -> viewModel.onSquareClick(row, col) },
         )

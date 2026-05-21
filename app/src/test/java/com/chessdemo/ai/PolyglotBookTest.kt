@@ -175,13 +175,13 @@ class PolyglotBookTest {
 
     @Test
     fun `lookup uses correct hash masking (upper 32 bits)`() {
-        // Verify the hash of a FEN produces the expected upper-32-bit value.
-        // SHA-256 of "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" first 8 bytes:
-        // 0x24 0x38 0xBF 0x3D 0xF8 0x18 0x26 0x6C
-        // Upper 32 bits: 0x2438BF3D = 607698749
+        // Verify the hash of the full FEN produces the expected upper-32-bit value.
+        // SHA-256 of "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" first 8 bytes:
+        // 0xb1 0x79 0x1d 0x7f 0xc9 0xae 0x3d 0x38
+        // Upper 32 bits: 0xb1791d7f
         val fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         val hash = computeHash(fen)
-        assertEquals("Upper 32 bits of SHA-256 should match", 0x2438BF3DL, hash)
+        assertEquals("Upper 32 bits of SHA-256 should match", 0xb1791d7fL, hash)
     }
 
     @Test
@@ -200,9 +200,8 @@ class PolyglotBookTest {
     data class BookEntry(val fen: String, val uci: String, val weight: Int)
 
     private fun computeHash(fen: String): Long {
-        val boardPart = fen.substringBefore(' ', fen)
         val digest = MessageDigest.getInstance("SHA-256")
-        val bytes = digest.digest(boardPart.toByteArray(Charsets.UTF_8))
+        val bytes = digest.digest(fen.toByteArray(Charsets.UTF_8))
         var hash = 0L
         for (i in 0 until 8) {
             hash = (hash shl 8) or (bytes[i].toLong() and 0xFFL)

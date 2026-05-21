@@ -40,7 +40,7 @@ fun moveToAlgebraic(move: Move, state: GameState): String {
     val pawnFile = if (piece?.type == PieceType.PAWN && isCapture) files[move.fromCol] else ""
     val capture = if (isCapture) "x" else ""
     val promo = if (piece?.type == PieceType.PAWN && (move.toRow == 0 || move.toRow == 7)) {
-        "=${move.promotionType.symbol}"
+        "=${move.promotionType?.symbol ?: "Q"}"
     } else ""
     val toSq = "${files[move.toCol]}${8 - move.toRow}"
 

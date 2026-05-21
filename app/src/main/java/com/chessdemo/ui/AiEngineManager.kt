@@ -25,6 +25,7 @@ class AiEngineManager(
     private val getClockState: () -> ClockState,
     private val soundPool: SoundPool,
     private val vibrator: Vibrator,
+    private val applyClockIncrement: (PieceColor) -> Unit = {},
 ) {
 
     private var aiJob: Job? = null
@@ -42,6 +43,7 @@ class AiEngineManager(
                 return@launch
             }
             val expectedTurn = stateToSearch.currentTurn
+            val searchStartTime = System.currentTimeMillis()
 
             val searchResult = withContext(Dispatchers.IO) {
                 try {
@@ -77,6 +79,7 @@ class AiEngineManager(
             }
 
             val (bestMove, finalInfo) = searchResult
+            val elapsedMs = System.currentTimeMillis() - searchStartTime
             if (finalInfo.isNotEmpty()) {
                 updateUi { state -> state.copy(thinkingInfo = com.chessdemo.ui.util.formatStockfishInfo(finalInfo)) }
             }
@@ -84,7 +87,8 @@ class AiEngineManager(
             if (bestMove != null && !getGameTree().currentState().gameOver) {
                 applyMove(bestMove)
                 updateUi { state -> state.copy(lastMove = bestMove) }
-                StockfishAI.recordMove(getGameState().currentTurn, 0L)
+                applyClockIncrement(expectedTurn)
+                StockfishAI.recordMove(expectedTurn, elapsedMs)
                 playMoveSound()
                 vibrateMove()
             }
@@ -107,17 +111,21 @@ class AiEngineManager(
 
                 val stateToSearch = getGameTree().currentState()
                 if (stateToSearch.gameOver) break
+                val movingColor = stateToSearch.currentTurn
+                val aiStartTime = System.currentTimeMillis()
                 val bestMove = withContext(Dispatchers.IO) {
                     val fen = StockfishAI.stateToFenPublic(stateToSearch)
                     StockfishAI.findBestMoveFromFen(fen)
                 }
+                val elapsedMs = System.currentTimeMillis() - aiStartTime
 
                 if (!isActive) break
 
                 if (bestMove != null && !getGameTree().currentState().gameOver) {
                     applyMove(bestMove)
                     updateUi { state -> state.copy(lastMove = bestMove) }
-                    StockfishAI.recordMove(getGameState().currentTurn, 0L)
+                    applyClockIncrement(movingColor)
+                    StockfishAI.recordMove(movingColor, elapsedMs)
                     playMoveSound()
                     vibrateMove()
                 }

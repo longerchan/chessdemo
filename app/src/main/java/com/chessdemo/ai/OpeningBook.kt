@@ -55,8 +55,7 @@ object OpeningBook : OpeningBookProvider {
             "f1b5" to 35,
             "f1c4" to 30,
             "d2d4" to 20,
-            "b1c3" to 10,
-            "g1c3" to 5,
+            "b1c3" to 15,
         ),
 
         // 1. e4 e5 2. Nf3 Nc6 3. Bb5 (Ruy Lopez) --- Black
@@ -892,7 +891,7 @@ object OpeningBook : OpeningBookProvider {
         val toRank = 8 - move.toRow
         val from = "${files[move.fromCol]}$fromRank"
         val to = "${files[move.toCol]}$toRank"
-        val promo = if (toRank == 1 || toRank == 8) {
+        val promo = if ((toRank == 1 || toRank == 8) && move.promotionType != null) {
             when (move.promotionType) {
                 PieceType.QUEEN -> "q"
                 PieceType.ROOK -> "r"

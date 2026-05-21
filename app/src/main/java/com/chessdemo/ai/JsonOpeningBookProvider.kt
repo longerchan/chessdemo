@@ -40,7 +40,7 @@ class JsonOpeningBookProvider(private val context: Context, private val fileName
         val toRank = 8 - move.toRow
         val from = "${files[move.fromCol]}$fromRank"
         val to = "${files[move.toCol]}$toRank"
-        val promo = if (toRank == 1 || toRank == 8) {
+        val promo = if ((toRank == 1 || toRank == 8) && move.promotionType != null) {
             when (move.promotionType) {
                 com.chessdemo.domain.PieceType.QUEEN -> "q"
                 com.chessdemo.domain.PieceType.ROOK -> "r"

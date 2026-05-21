@@ -122,12 +122,10 @@ object PolyglotBook {
 
     // --- Internal ---
 
-    /** Compute a hash from the board part of FEN (ignores turn, castling, etc for simplicity). */
+    /** Compute a hash from the full FEN string. */
     private fun computeHash(fen: String): Long {
-        // Use only the board position part (before first space) for hashing
-        val boardPart = fen.substringBefore(' ', fen)
         val digest = MessageDigest.getInstance("SHA-256")
-        val bytes = digest.digest(boardPart.toByteArray(Charsets.UTF_8))
+        val bytes = digest.digest(fen.toByteArray(Charsets.UTF_8))
         // Take first 8 bytes as a long (big-endian). Upper 32 bits match the stored buf.int hash.
         var hash = 0L
         for (i in 0 until 8) {

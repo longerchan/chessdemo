@@ -5,7 +5,7 @@ data class Move(
     val fromCol: Int,
     val toRow: Int,
     val toCol: Int,
-    val promotionType: PieceType = PieceType.QUEEN,
+    val promotionType: PieceType? = null,
     val isCastling: Boolean = false,
     val isEnPassant: Boolean = false,
 ) {
@@ -13,7 +13,7 @@ data class Move(
         val files = "abcdefgh"
         val from = "${files[fromCol]}${8 - fromRow}"
         val to = "${files[toCol]}${8 - toRow}"
-        val promo = if (promotionType != PieceType.QUEEN) "=${promotionType.symbol}" else ""
+        val promo = promotionType?.let { "=${it.symbol}" } ?: ""
         return "$from$to$promo"
     }
 }

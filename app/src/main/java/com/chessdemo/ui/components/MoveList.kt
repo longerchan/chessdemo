@@ -77,8 +77,8 @@ fun formatMoveAlgebraic(move: Move, state: GameState?): String {
     val isCapture = move.isEnPassant || (state?.board?.getOrNull(move.toRow)?.getOrNull(move.toCol) != null)
     val capture = if (isCapture) "x" else ""
     val pawnFile = if (piece?.type == PieceType.PAWN && isCapture) files[move.fromCol] else ""
-    val promo = if (move.toRow == 0 || move.toRow == 7 && piece?.type == PieceType.PAWN) {
-        when (move.promotionType) {
+    val promo = if ((move.toRow == 0 || move.toRow == 7) && piece?.type == PieceType.PAWN) {
+        when (move.promotionType ?: PieceType.QUEEN) {
             PieceType.QUEEN -> "=Q"; PieceType.ROOK -> "=R"; PieceType.BISHOP -> "=B"
             PieceType.KNIGHT -> "=N"; else -> ""
         }

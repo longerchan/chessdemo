@@ -18,15 +18,15 @@ class MoveTest {
     }
 
     @Test
-    fun `toString for queen promotion has no suffix`() {
-        val move = Move(1, 4, 0, 4, promotionType = PieceType.QUEEN) // e7-e8=Q (default, no suffix)
-        assertEquals("e7e8", move.toString())
+    fun `toString for queen promotion includes suffix`() {
+        val move = Move(1, 4, 0, 4, promotionType = PieceType.QUEEN) // e7-e8=Q
+        assertEquals("e7e8=Q", move.toString())
     }
 
     @Test
-    fun `default promotion is queen`() {
+    fun `default promotion type is null`() {
         val move = Move(1, 4, 0, 4)
-        assertEquals(PieceType.QUEEN, move.promotionType)
+        assertNull(move.promotionType)
     }
 
     @Test
