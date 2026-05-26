@@ -32,9 +32,11 @@ fun GameScreen(viewModel: GameViewModel) {
         StockfishAI.loadNNUEFromAssets(context)
     }
 
-    // Clock activation: activate the clock of the side whose turn it is
-    LaunchedEffect(navMode, currentState.currentTurn, currentState.gameOver, uiState.aiThinking) {
-        if (navMode == NavMode.PLAYING && !currentState.gameOver && !uiState.aiThinking) {
+    // Clock activation: activate the clock of the side whose turn it is.
+    // aiThinking is deliberately excluded — the clock must keep ticking during AI search,
+    // otherwise in AI-vs-AI mode the clock never decrements while increment keeps adding.
+    LaunchedEffect(navMode, currentState.currentTurn, currentState.gameOver) {
+        if (navMode == NavMode.PLAYING && !currentState.gameOver) {
             viewModel.updateClockActivation(true, currentState.currentTurn)
         } else {
             viewModel.updateClockActivation(false, currentState.currentTurn)
