@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.chessdemo"
+    namespace = "com.jnz.chess"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.chessdemo"
+        applicationId = "com.jnz.chess"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -21,7 +21,16 @@ android {
         }
 
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            abiFilters += listOf("arm64-v8a")
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("chessdemo.keystore")
+            storePassword = "android"
+            keyAlias = "chessdemo"
+            keyPassword = "android"
         }
     }
 
@@ -32,6 +41,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

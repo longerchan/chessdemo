@@ -1,14 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 project("stockfish")
 
-# Copy NNUE file to build dir so INCBIN can find it by relative name
-set(NNUE_FILE "nn-fcf986aea78a.nnue")
-set(NNUE_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/stockfish/src/nnue/${NNUE_FILE}")
-set(NNUE_DEST "${CMAKE_CURRENT_BINARY_DIR}/${NNUE_FILE}")
-if(EXISTS "${NNUE_SOURCE}")
-    configure_file("${NNUE_SOURCE}" "${NNUE_DEST}" COPYONLY)
-endif()
-
 set(STOCKFISH_SRC
     stockfish/src/benchmark.cpp
     stockfish/src/bitboard.cpp
@@ -33,7 +25,7 @@ set(STOCKFISH_SRC
     stockfish/src/tune.cpp
     stockfish/src/uci.cpp
     stockfish/src/ucioption.cpp
-    com_chessdemo_ai_StockfishEngine.cpp
+    com_jnz_chess_ai_StockfishEngine.cpp
 )
 
 add_library(stockfish SHARED ${STOCKFISH_SRC})
@@ -44,6 +36,7 @@ target_compile_definitions(stockfish PRIVATE
     NDEBUG
     USE_PTHREADS
     NO_NUMA
+    NNUE_EMBEDDING_OFF
 )
 
 # Optimization: O3 is critical for Stockfish's NNUE evaluation speed
