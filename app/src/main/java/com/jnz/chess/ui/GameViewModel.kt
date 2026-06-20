@@ -167,7 +167,7 @@ class GameViewModel(
         _uiState.value = _uiState.value.copy(
             selectedSquare = null,
             legalMoves = emptyList(),
-            lastMove = tree.moveList().getOrNull(index - 1),
+            lastMove = _gameTree.value.moveList().lastOrNull(),
         )
         savedStateHandle["current_fen"] = StockfishAI.stateToFenPublic(_gameTree.value.currentState())
     }

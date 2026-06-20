@@ -223,10 +223,17 @@ object ChessEngine {
                 else -> newCastling
             }
         }
-        if (move.toRow == 7 && move.toCol == 0) newCastling = newCastling.copy(whiteQueenSide = false)
-        if (move.toRow == 7 && move.toCol == 7) newCastling = newCastling.copy(whiteKingSide = false)
-        if (move.toRow == 0 && move.toCol == 0) newCastling = newCastling.copy(blackQueenSide = false)
-        if (move.toRow == 0 && move.toCol == 7) newCastling = newCastling.copy(blackKingSide = false)
+        // Remove castling rights if a rook was captured on its starting square
+        val captured = state.board[move.toRow][move.toCol]
+        if (captured != null && captured.type == PieceType.ROOK) {
+            newCastling = when (move.toRow to move.toCol) {
+                7 to 0 -> newCastling.copy(whiteQueenSide = false)
+                7 to 7 -> newCastling.copy(whiteKingSide = false)
+                0 to 0 -> newCastling.copy(blackQueenSide = false)
+                0 to 7 -> newCastling.copy(blackKingSide = false)
+                else -> newCastling
+            }
+        }
 
         if (piece.type != PieceType.PAWN && !isCapture) newHalfMove++
 
@@ -509,12 +516,17 @@ object ChessEngine {
 
         fun isMinor(p: Piece) = p.type in listOf(PieceType.BISHOP, PieceType.KNIGHT)
 
+        fun squareColor(pos: Pair<Int, Int>): Int = (pos.first + pos.second) % 2
+
+        fun singleBishopColor(piecesList: List<Pair<Piece, Pair<Int, Int>>>): Int? {
+            val bishops = piecesList.filter { it.first.type == PieceType.BISHOP }
+            return if (bishops.size == 1) squareColor(bishops[0].second) else null
+        }
+
         fun bishopsOnSameColor(piecesList: List<Pair<Piece, Pair<Int, Int>>>): Boolean {
             val bishops = piecesList.filter { it.first.type == PieceType.BISHOP }
             if (bishops.size != 2) return false
-            val pos1 = bishops[0].second
-            val pos2 = bishops[1].second
-            return (pos1.first + pos1.second) % 2 == (pos2.first + pos2.second) % 2
+            return squareColor(bishops[0].second) == squareColor(bishops[1].second)
         }
 
         return when {
@@ -525,6 +537,12 @@ object ChessEngine {
                 && bishopsOnSameColor(whitePieces) && blackPieces.size == 1 -> true
             blackPieces.size == 3 && blackPieces.count { it.first.type == PieceType.BISHOP } == 2
                 && bishopsOnSameColor(blackPieces) && whitePieces.size == 1 -> true
+            // K+B vs K+B with bishops on the same square color
+            whitePieces.size == 2 && blackPieces.size == 2 -> {
+                val wBishopColor = singleBishopColor(whitePieces)
+                val bBishopColor = singleBishopColor(blackPieces)
+                wBishopColor != null && bBishopColor != null && wBishopColor == bBishopColor
+            }
             else -> false
         }
     }

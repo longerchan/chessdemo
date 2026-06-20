@@ -275,7 +275,7 @@ fun BoardEditorDialog(
 
                     // Build GameState from editor board
                     val castling = CastlingRights(whiteKS, whiteQS, blackKS, blackQS)
-                    val tempState = GameState(
+                    val stateWithoutKey = GameState(
                         board = editorBoard,
                         currentTurn = currentTurn,
                         castlingRights = castling,
@@ -288,9 +288,9 @@ fun BoardEditorDialog(
                     )
 
                     // Check if king is in check
-                    val kingPos = tempState.findKing(currentTurn)
+                    val kingPos = stateWithoutKey.findKing(currentTurn)
                     if (kingPos != null && ChessEngine.isSquareAttacked(
-                            tempState, kingPos.first, kingPos.second,
+                            stateWithoutKey, kingPos.first, kingPos.second,
                             if (currentTurn == Color.WHITE) Color.BLACK else Color.WHITE
                         )
                     ) {
@@ -299,6 +299,11 @@ fun BoardEditorDialog(
                     }
 
                     errorMsg = null
+                    val key = stateWithoutKey.positionKey()
+                    val tempState = stateWithoutKey.copyWith(
+                        newPositionHistory = listOf(key),
+                        newPositionCounts = mapOf(key to 1)
+                    )
                     onLoad(tempState)
                 }) {
                     Text("加载局面")

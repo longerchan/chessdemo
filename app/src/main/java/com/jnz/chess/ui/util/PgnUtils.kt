@@ -63,45 +63,17 @@ fun moveToAlgebraic(move: Move, state: GameState): String {
     return notation
 }
 
-/** Strip PGN comments {...} and variations (...) handling nesting. */
+/** Strip PGN comments {...} and variations (...) with correct nesting handling. */
 private fun stripPgnExtras(text: String): String {
     val sb = StringBuilder()
-    var i = 0
-    val stack = mutableListOf<Char>() // nesting stack for { } and ( )
+    var depth = 0
 
-    while (i < text.length) {
-        when (text[i]) {
-            '{' -> {
-                if (stack.isEmpty()) {
-                    // start skipping comment
-                    stack.add('{')
-                } else if (stack.last() == '{') {
-                    // nested { inside { — still skipping
-                    stack.add('{')
-                }
-            }
-            '}' -> {
-                if (stack.isNotEmpty() && stack.last() == '{') {
-                    stack.removeAt(stack.lastIndex)
-                }
-            }
-            '(' -> {
-                if (stack.isEmpty()) {
-                    stack.add('(')
-                } else if (stack.last() == '(') {
-                    stack.add('(')
-                }
-            }
-            ')' -> {
-                if (stack.isNotEmpty() && stack.last() == '(') {
-                    stack.removeAt(stack.lastIndex)
-                }
-            }
-            else -> {
-                if (stack.isEmpty()) sb.append(text[i])
-            }
+    for (ch in text) {
+        when (ch) {
+            '{', '(' -> depth++
+            '}', ')' -> if (depth > 0) depth--
+            else -> if (depth == 0) sb.append(ch)
         }
-        i++
     }
     return sb.toString()
 }
