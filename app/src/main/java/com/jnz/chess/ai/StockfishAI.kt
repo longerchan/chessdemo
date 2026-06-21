@@ -233,7 +233,7 @@ object StockfishAI {
 
         sb.append(' ')
         sb.append(state.enPassantTarget?.let { (row, col) ->
-            "${('a' + col)}${8 - row}"
+            "${('a' + col).toChar()}${8 - row}"
         } ?: "-")
 
         sb.append(' ')

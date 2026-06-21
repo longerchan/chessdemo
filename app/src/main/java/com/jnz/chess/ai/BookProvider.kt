@@ -67,4 +67,5 @@ fun uciToMove(uci: String): Move? {
 
 private fun matchesMove(move: Move, target: Move): Boolean =
     move.fromRow == target.fromRow && move.fromCol == target.fromCol &&
-    move.toRow == target.toRow && move.toCol == target.toCol
+    move.toRow == target.toRow && move.toCol == target.toCol &&
+    move.promotionType == target.promotionType

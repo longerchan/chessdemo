@@ -89,7 +89,7 @@ class GameState(
             if (castlingRights.blackQueenSide) 'q' else '-'
         )
         enPassantTarget?.let { (r, c) ->
-            sb.append("${('a' + c)}${8 - r}")
+            sb.append("${('a' + c).toChar()}${8 - r}")
         } ?: sb.append('-')
         return sb.toString()
     }

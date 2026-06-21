@@ -28,6 +28,7 @@ fun playMoveSound(soundPool: SoundPool) {
             android.media.AudioManager.STREAM_MUSIC, 50
         )
         toneGen.startTone(android.media.ToneGenerator.TONE_PROP_BEEP, 80)
+        toneGen.release()
     } catch (_: Exception) {
         // ToneGenerator may fail on some devices — skip silently
     }
