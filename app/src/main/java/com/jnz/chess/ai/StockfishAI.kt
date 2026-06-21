@@ -130,7 +130,7 @@ object StockfishAI {
             }
         }
 
-        val depth = 0
+        val depth = difficulty.depth
         val moveTime = difficulty.moveTime
         val wTime = whiteTimeMs.toInt()
         val bTime = blackTimeMs.toInt()

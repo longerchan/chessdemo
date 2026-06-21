@@ -14,7 +14,7 @@ fun formatStockfishInfo(info: String): String {
         parts.contains("cp") -> {
             val idx = parts.indexOf("cp")
             val cp = parts.getOrNull(idx + 1)?.toIntOrNull() ?: 0
-            "eval: ${String.format("%.2f", cp / 100.0)}"
+            "eval: ${String.format(java.util.Locale.US, "%.2f", cp / 100.0)}"
         }
         parts.contains("mate") -> {
             val idx = parts.indexOf("mate")
@@ -25,17 +25,17 @@ fun formatStockfishInfo(info: String): String {
     }
 
     val nodesStr = nodes.toLongOrNull()?.let {
-        if (it >= 1_000_000) String.format("%.1fM", it / 1_000_000.0)
-        else if (it >= 1_000) String.format("%.1fK", it / 1_000.0) else "$it"
+        if (it >= 1_000_000) String.format(java.util.Locale.US, "%.1fM", it / 1_000_000.0)
+        else if (it >= 1_000) String.format(java.util.Locale.US, "%.1fK", it / 1_000.0) else "$it"
     } ?: ""
 
     val npsStr = nps.toLongOrNull()?.let {
-        if (it >= 1_000_000) String.format("%.1fMn/s", it / 1_000_000.0)
-        else String.format("%dKn/s", it / 1_000)
+        if (it >= 1_000_000) String.format(java.util.Locale.US, "%.1fMn/s", it / 1_000_000.0)
+        else String.format(java.util.Locale.US, "%dKn/s", it / 1_000)
     } ?: ""
 
     val timeMs = time.toLongOrNull()?.let {
-        if (it >= 1000) String.format("%.1fs", it / 1000.0) else "${it}ms"
+        if (it >= 1000) String.format(java.util.Locale.US, "%.1fs", it / 1000.0) else "${it}ms"
     } ?: ""
 
     val pv = parts.indexOf("pv")
@@ -96,7 +96,7 @@ fun formatAnalysisLine(info: String): String {
         parts.contains("cp") -> {
             val cpIdx = parts.indexOf("cp")
             val cp = parts.getOrNull(cpIdx + 1)?.toIntOrNull() ?: 0
-            String.format("+%.2f", cp / 100.0)
+            String.format(java.util.Locale.US, "+%.2f", cp / 100.0)
         }
         parts.contains("mate") -> {
             val mateIdx = parts.indexOf("mate")

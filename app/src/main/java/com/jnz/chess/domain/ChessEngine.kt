@@ -533,6 +533,11 @@ object ChessEngine {
             whitePieces.size == 1 && blackPieces.size == 1 -> true
             whitePieces.size == 1 && blackPieces.size == 2 && blackPieces.any { isMinor(it.first) } -> true
             blackPieces.size == 1 && whitePieces.size == 2 && whitePieces.any { isMinor(it.first) } -> true
+            // K+NN vs K: two knights cannot force checkmate
+            whitePieces.size == 1 && blackPieces.size == 3
+                && blackPieces.count { it.first.type == PieceType.KNIGHT } == 2 -> true
+            blackPieces.size == 1 && whitePieces.size == 3
+                && whitePieces.count { it.first.type == PieceType.KNIGHT } == 2 -> true
             whitePieces.size == 3 && whitePieces.count { it.first.type == PieceType.BISHOP } == 2
                 && bishopsOnSameColor(whitePieces) && blackPieces.size == 1 -> true
             blackPieces.size == 3 && blackPieces.count { it.first.type == PieceType.BISHOP } == 2

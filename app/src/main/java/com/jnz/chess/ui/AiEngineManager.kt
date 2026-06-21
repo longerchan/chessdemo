@@ -190,7 +190,7 @@ class AiEngineManager(
     // --- Private helpers ---
 
     private fun playMoveSound() {
-        com.jnz.chess.ui.util.playMoveSound(soundPool)
+        com.jnz.chess.ui.util.playMoveSound()
     }
 
     private fun vibrateMove() {

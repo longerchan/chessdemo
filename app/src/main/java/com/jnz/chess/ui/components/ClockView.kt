@@ -47,7 +47,7 @@ fun ClockDisplay(timeMs: Long, isActive: Boolean, modifier: Modifier = Modifier)
     val bgColor = if (isActive) Color(0xFF4CAF50) else Color(0xFF333333)
     Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = bgColor), shape = RoundedCornerShape(6.dp)) {
         Text(
-            text = String.format("%d:%02d", mins, secs),
+            text = String.format(java.util.Locale.US, "%d:%02d", mins, secs),
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
             fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White,
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,

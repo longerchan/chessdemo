@@ -13,6 +13,7 @@ import com.jnz.chess.domain.*
 import com.jnz.chess.domain.Color as PieceColor
 import com.jnz.chess.ui.util.createSoundPool
 import com.jnz.chess.ui.util.generatePgn
+import com.jnz.chess.ui.util.initToneScope
 import com.jnz.chess.ui.util.parsePgn
 import com.jnz.chess.ui.util.playMoveSound
 import com.jnz.chess.ui.util.vibrateMove
@@ -86,6 +87,10 @@ class GameViewModel(
     private val app: Context get() = getApplication()
     private val soundPool by lazy { createSoundPool() }
     private val vibrator by lazy { app.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator }
+
+    init {
+        initToneScope(viewModelScope)
+    }
 
     private val aiManager = AiEngineManager(
         scope = viewModelScope,
@@ -354,7 +359,7 @@ class GameViewModel(
                     legalMoves = emptyList(),
                     lastMove = targetMove,
                 )
-                playMoveSound(soundPool)
+                playMoveSound()
                 vibrateMove(vibrator)
                 return
             }
@@ -380,7 +385,7 @@ class GameViewModel(
         // elapsedMs=0: human clock is managed by ClockEngineManager tick loop; StockfishAI clock is only for AI time management
         clockManager.applyIncrement(movingColor)
         StockfishAI.recordMove(movingColor, 0L)
-        playMoveSound(soundPool)
+        playMoveSound()
         vibrateMove(vibrator)
 
         aiManager.checkAndTriggerAi()
